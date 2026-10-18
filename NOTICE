@@ -1,0 +1,19 @@
+Bike Screen
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The APK bundles the following third-party software, all under the Apache License, Version 2.0:
+
+AndroidX Media3 (ExoPlayer) 1.4.1 and the AndroidX libraries it depends on
+  (annotation, arch-core, collection, concurrent-futures, core, exifinterface, lifecycle, versionedparcelable)
+  Copyright The Android Open Source Project — https://github.com/androidx/media
+
+Guava (guava, failureaccess, listenablefuture)
+  Copyright The Guava Authors — https://github.com/google/guava
+
+Kotlin standard library and JetBrains annotations
+  Copyright JetBrains s.r.o. and Kotlin Programming Language contributors — https://github.com/JetBrains/kotlin
+
+Noto Sans SC (subset to GB2312 + punctuation by tools/subset-font.py), app/src/main/assets/title.otf
+  Copyright 2014-2021 Adobe (http://www.adobe.com/). Noto is a trademark of Google Inc.
+  Licensed under the SIL Open Font License, Version 1.1 — app/src/main/assets/title-OFL.txt
+  https://github.com/notofonts/noto-cjk

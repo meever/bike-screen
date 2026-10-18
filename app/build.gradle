@@ -1,0 +1,53 @@
+plugins { id 'com.android.application' }
+
+// Per-install settings live in local.properties (never committed):
+//   friendlyName=My Bike        name shown in the phone's cast list (default "Bike Screen")
+//   debugEndpoints=true         serve GET /log and GET /cmd/boost on the LAN (default off)
+//   signing.storeFile=..., signing.storePassword=..., signing.keyAlias=..., signing.keyPassword=...
+def local = new Properties()
+def lp = rootProject.file('local.properties')
+if (lp.exists()) lp.withInputStream { local.load(it) }
+
+android {
+    namespace 'io.github.bikescreen'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'io.github.bikescreen'
+        minSdk 21
+        targetSdk 30
+        versionCode 3
+        versionName '1.2'
+        buildConfigField 'String', 'FRIENDLY_NAME', '"' + local.getProperty('friendlyName', 'Bike Screen').replace('"', '') + '"'
+        buildConfigField 'boolean', 'DEBUG_ENDPOINTS', local.getProperty('debugEndpoints', 'false')
+    }
+    buildFeatures { buildConfig true }
+    signingConfigs {
+        release {
+            if (local.getProperty('signing.storeFile')) {
+                storeFile file(local.getProperty('signing.storeFile'))
+                storePassword local.getProperty('signing.storePassword')
+                keyAlias local.getProperty('signing.keyAlias')
+                keyPassword local.getProperty('signing.keyPassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            // your own key if local.properties names one, else the Android debug key
+            signingConfig local.getProperty('signing.storeFile') ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+    lint { checkReleaseBuilds false }   // sideloaded, never on Play
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.4.1'
+}
