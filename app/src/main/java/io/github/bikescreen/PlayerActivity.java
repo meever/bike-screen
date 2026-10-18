@@ -22,7 +22,8 @@ public final class PlayerActivity extends Activity {
     private LinearLayout bar;
     private TextView pauseBtn, speedBtn, holdBtn;
     private long hideAt, titleUntil;
-    private TextView titleView;
+    private TextView titleView, status;
+    private long stoppedSince;              // 0 while playing; finish after 4 s stopped, so the phone's next video reuses the screen
     private String shownTitle;
     private static Typeface cjk;            // bundled Noto Sans SC subset: the device may have no CJK font
 
@@ -58,6 +59,7 @@ public final class PlayerActivity extends Activity {
         button("+10s", () -> BikeService.skip(10_000));
         speedBtn = button("1x", BikeService::cycleSpeed);
         holdBtn = button("Hold: off", () -> { if (BikeService.self != null) BikeService.self.setHold(!BikeService.hold); });
+        button("Next", BikeService::next);
         bar.setVisibility(View.GONE);
         root.addView(bar, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         if (cjk == null) cjk = Typeface.createFromAsset(getAssets(), "title.otf");
@@ -71,6 +73,14 @@ public final class PlayerActivity extends Activity {
         titleView.setBackgroundColor(0xB0000000);
         titleView.setVisibility(View.GONE);
         root.addView(titleView, new FrameLayout.LayoutParams(-1, -2, Gravity.TOP));
+        status = new TextView(this);
+        status.setTextColor(Color.WHITE);
+        status.setTextSize(30);
+        status.setPadding(40, 20, 40, 20);
+        status.setBackgroundColor(0xB0000000);
+        status.setText("Loading…");
+        status.setVisibility(View.GONE);
+        root.addView(status, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
         setContentView(root);
         immersive();
     }
@@ -102,7 +112,12 @@ public final class PlayerActivity extends Activity {
     @Override public void onWindowFocusChanged(boolean f) { if (f) immersive(); }
 
     private void watch() {
-        if (BikeService.stopped) { finish(); return; }
+        long now = SystemClock.uptimeMillis();
+        if (!BikeService.stopped) stoppedSince = 0;
+        else if (stoppedSince == 0) stoppedSince = now;
+        else if (now - stoppedSince > 4_000) { finish(); return; }
+        String st = BikeService.self == null ? "" : BikeService.self.state();
+        status.setVisibility(BikeService.stopped || st.equals("TRANSITIONING") ? View.VISIBLE : View.GONE);
         String t = BikeService.title;
         if (!t.equals(shownTitle)) { shownTitle = t; titleView.setText(clean(t)); titleUntil = SystemClock.uptimeMillis() + 8_000; }
         boolean showTitle = !t.isEmpty() && (bar.getVisibility() == View.VISIBLE || SystemClock.uptimeMillis() < titleUntil);

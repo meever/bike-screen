@@ -41,6 +41,8 @@ public final class BikeService extends Service implements io.github.bikescreen.d
     /** Title of what is playing, from the phone's DIDL metadata; "" when it sent none. */
     static volatile String title = "";
     static final float[] SPEEDS = {1f, 1.25f, 1.5f, 2f};
+    /** Next: uptime at which the faked ending reports STOPPED; -1 = ended, keep reporting the end; 0 = not faking. */
+    private static volatile long fakeEndAt;
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private HandlerThread net;
@@ -223,6 +225,7 @@ public final class BikeService extends Service implements io.github.bikescreen.d
     /** Mirrors ExoPlayer state into volatile fields every 200 ms. */
     private void tick() {
         if (exo == null) return;
+        if (fakeEndAt != 0) { fakeEnd(); main.postDelayed(this::tick, 200); return; }
         int s = exo.getPlaybackState();
         long d = exo.getDuration();
         pos = exo.getCurrentPosition();
@@ -251,6 +254,7 @@ public final class BikeService extends Service implements io.github.bikescreen.d
     private void startPending() { String u = pending, t = pendingTitle; pending = null; start(u, t); }
 
     private void start(String uri, String t) {
+        fakeEndAt = 0;
         stopped = false;
         title = t;
         state = "TRANSITIONING";
@@ -266,6 +270,30 @@ public final class BikeService extends Service implements io.github.bikescreen.d
     static void togglePause() { exo.setPlayWhenReady(!exo.getPlayWhenReady()); }
 
     static void skip(long ms) { exo.seekTo(Math.max(0, exo.getCurrentPosition() + ms)); }
+
+    /**
+     * Freeze the picture and tell the phone the video is in its last 2 s, then that it ended.
+     * Douyin only advances after it has seen PLAYING near the end: a bare STOPPED (or a jump straight
+     * to the end) reads as a dropout and it re-sends the same video. Faking it avoids loading the tail.
+     */
+    static void next() {
+        log("next pressed at " + exo.getCurrentPosition() / 1000 + "s");
+        if (self != null && pending != null) { self.startPending(); return; }
+        if (exo.getDuration() == C.TIME_UNSET) return;
+        exo.setPlayWhenReady(false);
+        fakeEndAt = SystemClock.uptimeMillis() + 2_000;
+    }
+
+    private void fakeEnd() {
+        long left = fakeEndAt - SystemClock.uptimeMillis();
+        if (fakeEndAt > 0 && left > 0) { state = "PLAYING"; pos = Math.max(0, dur - left); return; }
+        state = "STOPPED"; pos = dur;
+        if (fakeEndAt == -1) return;
+        fakeEndAt = -1;
+        stopped = true;
+        exo.stop();
+        log("next: reported the end");
+    }
 
     static float cycleSpeed() {
         float now = exo.getPlaybackParameters().speed, next = SPEEDS[0];
@@ -297,6 +325,7 @@ public final class BikeService extends Service implements io.github.bikescreen.d
 
     @Override public void stop() {
         if (holding()) { log("hold: ignored phone's Stop"); return; }
+        fakeEndAt = 0;
         state = "STOPPED";
         main.post(() -> { stopped = true; exo.stop(); });
     }
