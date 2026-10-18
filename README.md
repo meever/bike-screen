@@ -26,7 +26,7 @@ A hobby project shared as-is: issues and pull requests are welcome, but no suppo
 
 - Starts at boot as a foreground service and announces itself on the LAN over SSDP every 10 s. It holds Wi-Fi, multicast and partial wake locks so it always answers. This costs some idle power.
 - A cast opens a full-screen player and wakes the screen. Stopping on the phone, or pressing Back, closes the player.
-- **On-screen controls:** tap the video for a bar that hides after 6 s: -10 s, pause, +10 s, speed (1 / 1.25 / 1.5 / 2x, kept across videos), **Hold** and **Next**. Hold finishes the current video even when the phone moves on, then plays the phone's latest pick; while it is on, the phone's Stop waits too (Back still stops). Next jumps to the end, so the phone sends its next video. The phone keeps the playlist: DLNA has no way for the screen to ask for the previous video.
+- **On-screen controls:** tap the video for a bar that hides after 6 s: -10 s, pause, +10 s, speed (1 / 1.25 / 1.5 / 2x, kept across videos) and **Hold**. Hold finishes the current video even when the phone moves on, then plays the phone's latest pick (tap Hold off to play it now); while it is on, the phone's Stop waits too (Back still stops). There is no Next or Previous: the phone keeps the playlist, and DLNA gives the screen no way to ask for another video. Douyin, for one, answers a finished video by re-sending the same one at its own position.
 - **Title:** the video's title (from the phone's cast metadata, hashtags dropped) shows at the top for 8 s when a video starts and whenever the controls are up. It uses a bundled Noto Sans SC subset (~2 MB, `tools/subset-font.py`), so Chinese titles render even on devices without a CJK font.
 - **Fast start:** playback begins after 0.5 s of buffered video (ExoPlayer's default is 2.5 s).
 - **Volume:** the phone's volume slider scales the player's own gain, which defaults to 0.55 (`CAST_GAIN`). The device's system volume is never changed.
@@ -59,7 +59,7 @@ Enable developer options and USB or Wi-Fi debugging on the device.
 **Without building:** download `bike-screen-<version>.apk` from [Releases](../../releases), check its SHA-256 against the release notes, then:
 
 ```sh
-adb install bike-screen-1.2.apk
+adb install bike-screen-1.3.apk
 adb shell appops set io.github.bikescreen SYSTEM_ALERT_WINDOW allow
 adb shell dumpsys deviceidle whitelist +io.github.bikescreen
 adb shell am start -n io.github.bikescreen/.PlayerActivity

@@ -58,7 +58,6 @@ public final class PlayerActivity extends Activity {
         button("+10s", () -> BikeService.skip(10_000));
         speedBtn = button("1x", BikeService::cycleSpeed);
         holdBtn = button("Hold: off", () -> { if (BikeService.self != null) BikeService.self.setHold(!BikeService.hold); });
-        button("Next", BikeService::next);
         bar.setVisibility(View.GONE);
         root.addView(bar, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
         if (cjk == null) cjk = Typeface.createFromAsset(getAssets(), "title.otf");

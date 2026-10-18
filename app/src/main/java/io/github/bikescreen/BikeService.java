@@ -267,13 +267,6 @@ public final class BikeService extends Service implements io.github.bikescreen.d
 
     static void skip(long ms) { exo.seekTo(Math.max(0, exo.getCurrentPosition() + ms)); }
 
-    /** Jump to the end: plays the held video, else reports STOPPED so the phone sends its next one. */
-    static void next() {
-        long d = exo.getDuration();
-        log("next pressed at " + exo.getCurrentPosition() / 1000 + "s");
-        if (d != C.TIME_UNSET) exo.seekTo(d);
-    }
-
     static float cycleSpeed() {
         float now = exo.getPlaybackParameters().speed, next = SPEEDS[0];
         for (int i = 0; i < SPEEDS.length - 1; i++) if (now == SPEEDS[i]) next = SPEEDS[i + 1];
